@@ -68,4 +68,30 @@ No reescribas lo que ya funciona. Dame únicamente:
 CRITERIO DE ACEPTACIÓN: Mantenés la estructura de la app intacta, los datos sobreviven al cerrar la pestaña por completo y me das el contenido formateado para PROMPTS.md.
 ```
 
+## M3 · Experiencia de uso en celular
+
+```text
+ROL: Sos un diseñador UI/UX y desarrollador senior de aplicaciones web móviles.
+
+CONTEXTO: Estoy optimizando la app "Trueque Escolar". Necesito implementar la Mejora 3 (M3): Experiencia de uso en celular real para que sea usable con una sola mano y sin explicaciones.
+
+TAREA Y REQUISITOS:
+Ajustá la interfaz CSS/HTML de la app con estos 6 requisitos, sin modificar la lógica JavaScript existente:
+1. Funcione perfectamente desde 320 px de ancho, diseñada para uso con una sola mano y sin hacer zoom.
+2. Contraste suficiente para lectura con luz solar directa, con tamaño de texto mínimo de 16 px.
+3. Todos los campos de formulario deben tener una etiqueta (<label>) visible, no solo texto dentro del placeholder.
+4. Un solo botón principal destacado visualmente por pantalla; los demás botones con estilos secundarios o neutros.
+5. Estado vacío: si no hay ningún libro cargado, mostrar un diseño y texto claro que invite a la primera acción (ej: "Aún no hay publicaciones. ¡Sé el primero en intercambiar un libro!").
+6. Mensajes de confirmación, éxito y error visibles, en español claro y sin tecnicismos.
+
+RESTRICCIONES Y FORMATO DE SALIDA:
+No reescribas la lógica que ya funciona. Dame únicamente:
+1. Los cambios en el código CSS e HTML indicando archivo y ubicación exacta.
+2. Una respuesta explícita indicando cuál de los 6 puntos NO pudiste cumplir y por qué (o confirmación de cumplimiento de los 6 puntos).
+3. El texto exacto en formato Markdown para agregar a mi archivo PROMPTS.md bajo el encabezado "## M3 · Experiencia de uso en celular".
+
+CRITERIO DE ACEPTACIÓN: Mantenés las funciones anteriores intactas, la interfaz es intuitiva en pantallas pequeñas y me entregás el bloque formateado para PROMPTS.md.
+```
+
+
 

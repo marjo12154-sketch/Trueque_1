@@ -255,7 +255,7 @@ export default function App() {
 
     const tituloLimpio = nuevoTitulo.trim();
     if (!tituloLimpio) {
-      setErrorFormulario('Por favor escribe el título del libro o artículo.');
+      setErrorFormulario('Por favor escribe el nombre del libro para que otros estudiantes lo reconozcan.');
       return;
     }
 
@@ -282,10 +282,6 @@ export default function App() {
       createdAt: Date.now()
     };
 
-    /* PUNTO CLAVE DE ERROR:
-     * Inmutabilidad en React: Nunca usar libros.unshift() o libros.push() directamente.
-     * Creamos un nuevo arreglo con el nuevo elemento al inicio para que el render detecte el cambio.
-     */
     setLibros((anteriores) => [nuevoLibro, ...anteriores]);
 
     // Limpiar formulario y cerrar modal
@@ -299,10 +295,9 @@ export default function App() {
     setErrorFormulario('');
     setModalAbierto(false);
 
-    // Asegurar que estamos en la pestaña de disponibles
     setPestanaActiva('disponibles');
 
-    mostrarToast(`¡"${tituloLimpio}" fue publicado con éxito en el trueque!`);
+    mostrarToast(`¡Listo! "${tituloLimpio}" ya está publicado y visible para tus compañeros.`);
   };
 
   // Manejo de carga de archivo de foto desde cámara o galería
@@ -312,7 +307,7 @@ export default function App() {
 
     const archivo = archivos[0];
     if (!archivo.type.startsWith('image/')) {
-      setErrorFormulario('El archivo seleccionado debe ser una imagen válida.');
+      setErrorFormulario('Por favor selecciona un archivo que sea una foto o imagen válida.');
       return;
     }
 
@@ -323,7 +318,7 @@ export default function App() {
       setNuevaFotoUrl(base64Optimizado);
     } catch (err) {
       console.error('Error al procesar la foto:', err);
-      setErrorFormulario('No se pudo procesar la foto. Intenta con otra imagen.');
+      setErrorFormulario('No pudimos procesar esa foto. Por favor intenta con otra imagen o foto de tu cámara.');
     } finally {
       setProcesandoFoto(false);
     }
@@ -333,10 +328,6 @@ export default function App() {
   // FUNCIÓN 3: MARCAR COMO ENTREGADO Y RETIRARLO DE LA LISTA
   // --------------------------------------------------------------------------
   const marcarComoEntregado = (id: string, titulo: string) => {
-    /* PUNTO CLAVE DE ERROR:
-     * No mutar el libro directamente (item.isDelivered = true).
-     * Mapeamos devolviendo un nuevo objeto inmutable con isDelivered: true.
-     */
     setLibros((anteriores) =>
       anteriores.map((item) =>
         item.id === id
@@ -345,7 +336,7 @@ export default function App() {
       )
     );
 
-    mostrarToast(`"${titulo}" marcado como entregado y retirado de la lista activa.`, 'info');
+    mostrarToast(`¡Excelente! "${titulo}" fue marcado como entregado y ya no figura en la lista activa.`, 'info');
   };
 
   // Acción para restaurar en caso de que alguien se equivoque al tocar
@@ -355,13 +346,13 @@ export default function App() {
         item.id === id ? { ...item, isDelivered: false, deliveredAt: undefined } : item
       )
     );
-    mostrarToast(`"${titulo}" restaurado a la lista de disponibles.`);
+    mostrarToast(`"${titulo}" volvió a estar disponible en la lista.`);
   };
 
   // Acción para eliminar definitivamente
   const eliminarDefinitivo = (id: string, titulo: string) => {
     setLibros((anteriores) => anteriores.filter((item) => item.id !== id));
-    mostrarToast(`"${titulo}" eliminado del registro.`);
+    mostrarToast(`"${titulo}" fue eliminado del registro.`);
   };
 
   // --------------------------------------------------------------------------
@@ -510,131 +501,157 @@ export default function App() {
       {/* ==================================================================== */}
       {/* ZONA DE CONTROL: BÚSQUEDA Y FILTROS */}
       {/* ==================================================================== */}
-      <main className="max-w-4xl mx-auto w-full px-4 pt-4 flex-1">
-        {/* Barra de búsqueda interactiva */}
-        <div className="relative mb-3">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <Search className="w-5 h-5" />
+      <main className="max-w-4xl mx-auto w-full px-3 sm:px-4 pt-4 flex-1">
+        {/* Barra de búsqueda interactiva con label accesible */}
+        <div className="mb-3">
+          <label htmlFor="barra-busqueda-libros" className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+            Buscar libros por materia o palabras clave
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <Search className="w-5 h-5" />
+            </div>
+            <input
+              id="barra-busqueda-libros"
+              type="text"
+              value={terminoBusqueda}
+              onChange={(e) => setTerminoBusqueda(e.target.value)}
+              placeholder="Ej: Matemáticas, 2.º año, Lengua..."
+              className="w-full pl-11 pr-11 py-3 bg-white border-2 border-slate-300 rounded-2xl text-base font-semibold text-slate-950 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-600 shadow-xs transition-all"
+            />
+            {terminoBusqueda && (
+              <button
+                type="button"
+                onClick={() => setTerminoBusqueda('')}
+                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-800 p-2"
+                title="Borrar búsqueda"
+                aria-label="Borrar texto de búsqueda"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            value={terminoBusqueda}
-            onChange={(e) => setTerminoBusqueda(e.target.value)}
-            placeholder="Buscar por materia o palabra clave (ej: Matemáticas, 2.º año)..."
-            className="w-full pl-10 pr-10 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-xs transition-all"
-          />
-          {terminoBusqueda && (
-            <button
-              onClick={() => setTerminoBusqueda('')}
-              className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600"
-              title="Borrar búsqueda"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
         </div>
 
         {/* Carrusel horizontal de materias para filtro táctil en móvil */}
-        <div className="mb-4 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 flex items-center gap-2">
-          <button
-            onClick={() => setMateriaSeleccionada('Todas')}
-            className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              materiaSeleccionada === 'Todas'
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-            }`}
-          >
-            Todas las materias
-          </button>
-          {MATERIAS_COMUNES.map((materia) => (
+        <div className="mb-4">
+          <p className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+            Filtrar por materia:
+          </p>
+          <div className="overflow-x-auto no-scrollbar pb-1 -mx-3 px-3 flex items-center gap-2">
             <button
-              key={materia}
-              onClick={() => setMateriaSeleccionada(materia)}
-              className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                materiaSeleccionada === materia
-                  ? 'bg-amber-600 text-white shadow-xs'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+              type="button"
+              onClick={() => setMateriaSeleccionada('Todas')}
+              className={`shrink-0 min-h-[44px] px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                materiaSeleccionada === 'Todas'
+                  ? 'bg-slate-950 text-white shadow-sm ring-2 ring-slate-900'
+                  : 'bg-white text-slate-800 border-2 border-slate-300 hover:bg-slate-100'
               }`}
             >
-              {materia}
+              Todas las materias
             </button>
-          ))}
+            {MATERIAS_COMUNES.map((materia) => (
+              <button
+                key={materia}
+                type="button"
+                onClick={() => setMateriaSeleccionada(materia)}
+                className={`shrink-0 min-h-[44px] px-4 py-2 rounded-xl text-sm font-bold transition-all cursor-pointer ${
+                  materiaSeleccionada === materia
+                    ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-600'
+                    : 'bg-white text-slate-800 border-2 border-slate-300 hover:bg-slate-100'
+                }`}
+              >
+                {materia}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Pestañas: Libros disponibles vs Libros entregados */}
-        <div className="flex items-center justify-between border-b border-slate-200 mb-4 pb-2">
+        <div className="flex items-center justify-between border-b-2 border-slate-200 mb-4 pb-2">
           <div className="flex gap-4">
             <button
+              type="button"
               onClick={() => setPestanaActiva('disponibles')}
-              className={`text-sm font-bold pb-2 relative transition-colors ${
+              className={`text-base font-extrabold pb-2 relative transition-colors cursor-pointer ${
                 pestanaActiva === 'disponibles'
-                  ? 'text-amber-700'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'text-amber-800'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Disponibles ({totalDisponibles})
               {pestanaActiva === 'disponibles' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-600 rounded-full" />
+                <span className="absolute bottom-0 left-0 right-0 h-1 bg-amber-600 rounded-full" />
               )}
             </button>
             <button
+              type="button"
               onClick={() => setPestanaActiva('entregados')}
-              className={`text-sm font-bold pb-2 relative transition-colors ${
+              className={`text-base font-extrabold pb-2 relative transition-colors cursor-pointer ${
                 pestanaActiva === 'entregados'
-                  ? 'text-emerald-700'
-                  : 'text-slate-500 hover:text-slate-800'
+                  ? 'text-emerald-800'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Ya entregados ({totalEntregados})
               {pestanaActiva === 'entregados' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
+                <span className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-700 rounded-full" />
               )}
             </button>
           </div>
 
-          <span className="text-xs text-slate-400 font-medium">
+          <span className="text-sm text-slate-600 font-bold">
             {librosFiltrados.length}{' '}
             {librosFiltrados.length === 1 ? 'libro' : 'libros'}
           </span>
         </div>
 
         {/* ================================================================== */}
-        {/* LISTADO DE ARTÍCULOS / LIBROS */}
+        {/* LISTADO DE ARTÍCULOS / LIBROS (Y ESTADO VACÍO CLARO) */}
         {/* ================================================================== */}
         {librosFiltrados.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center my-6">
-            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3">
-              <Search className="w-6 h-6" />
+          <div className="bg-white rounded-3xl border-2 border-dashed border-slate-300 p-8 text-center my-6 shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-800 mx-auto flex items-center justify-center mb-4 border border-amber-200">
+              <BookOpen className="w-8 h-8" />
             </div>
-            <h3 className="text-base font-bold text-slate-800 mb-1">
-              No se encontraron libros
-            </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+            
+            {/* Mensaje de estado vacío amigable y claro */}
+            <h3 className="text-lg sm:text-xl font-extrabold text-slate-950 mb-2">
               {terminoBusqueda || materiaSeleccionada !== 'Todas'
-                ? `No hay resultados para "${terminoBusqueda || materiaSeleccionada}". Prueba con otro término o limpia los filtros.`
+                ? 'No encontramos libros con esa búsqueda'
+                : libros.length === 0
+                ? 'Aún no hay publicaciones. ¡Sé el primero en intercambiar un libro!'
                 : pestanaActiva === 'disponibles'
-                ? 'No hay libros disponibles en este momento. ¡Sé el primero en publicar uno!'
+                ? '¡Todos los libros fueron entregados o no hay disponibles en esta categoría!'
                 : 'Todavía no hay libros registrados como entregados.'}
+            </h3>
+
+            <p className="text-base text-slate-700 max-w-md mx-auto mb-6 leading-relaxed">
+              {terminoBusqueda || materiaSeleccionada !== 'Todas'
+                ? `No hay publicaciones para "${terminoBusqueda || materiaSeleccionada}". Puedes limpiar los filtros para ver todos los libros disponibles.`
+                : 'Ayuda a un compañero del instituto publicando ese libro que ya no usas. Es gratis, rápido y colaborativo.'}
             </p>
 
             {terminoBusqueda || materiaSeleccionada !== 'Todas' ? (
               <button
+                type="button"
                 onClick={() => {
                   setTerminoBusqueda('');
                   setMateriaSeleccionada('Todas');
                 }}
-                className="text-xs font-semibold text-amber-700 hover:text-amber-800 underline"
+                className="inline-flex items-center justify-center min-h-[48px] px-6 py-3 bg-slate-100 hover:bg-slate-200 border-2 border-slate-300 text-slate-900 rounded-2xl text-base font-bold transition-all cursor-pointer"
               >
-                Limpiar búsqueda y filtros
+                Ver todos los libros
               </button>
             ) : (
               pestanaActiva === 'disponibles' && (
                 <button
+                  type="button"
                   onClick={() => setModalAbierto(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-xl text-xs font-bold hover:bg-amber-700"
+                  className="inline-flex items-center gap-2 min-h-[48px] px-6 py-3 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-2xl text-base font-extrabold shadow-md shadow-amber-600/30 transition-all cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
-                  Publicar un libro ahora
+                  <Plus className="w-5 h-5 stroke-[2.5]" />
+                  Publicar el primer libro
                 </button>
               )
             )}
@@ -644,15 +661,15 @@ export default function App() {
             {librosFiltrados.map((libro) => (
               <article
                 key={libro.id}
-                className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden flex flex-col justify-between ${
+                className={`bg-white rounded-2xl border-2 transition-all duration-200 overflow-hidden flex flex-col justify-between ${
                   libro.isDelivered
-                    ? 'border-emerald-200 bg-emerald-50/20 opacity-85'
-                    : 'border-slate-200 hover:shadow-md hover:border-slate-300'
+                    ? 'border-emerald-300 bg-emerald-50/30 opacity-90'
+                    : 'border-slate-300 hover:border-slate-400 hover:shadow-md'
                 }`}
               >
                 <div>
                   {/* Foto del artículo con badge de estado y materia */}
-                  <div className="relative aspect-4/3 bg-slate-100 overflow-hidden">
+                  <div className="relative aspect-4/3 bg-slate-200 overflow-hidden">
                     <img
                       src={libro.photoUrl}
                       alt={libro.title}
@@ -660,83 +677,87 @@ export default function App() {
                       loading="lazy"
                     />
 
-                    {/* Badge de Materia */}
-                    <span className="absolute top-2.5 left-2.5 bg-slate-900/80 backdrop-blur-md text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg">
+                    {/* Badge de Materia con alto contraste */}
+                    <span className="absolute top-2.5 left-2.5 bg-slate-950 text-white text-xs font-bold px-3 py-1 rounded-lg border border-slate-800 shadow-sm">
                       {libro.subject}
                     </span>
 
-                    {/* Badge de Condición / Estado */}
+                    {/* Badge de Condición / Estado con alto contraste */}
                     <span
-                      className={`absolute top-2.5 right-2.5 text-[11px] font-bold px-2 py-0.5 rounded-md shadow-xs ${
+                      className={`absolute top-2.5 right-2.5 text-xs font-extrabold px-2.5 py-1 rounded-lg shadow-sm border ${
                         libro.condition === 'Excelente'
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                          ? 'bg-emerald-800 text-white border-emerald-950'
                           : libro.condition === 'Bueno'
-                          ? 'bg-blue-100 text-blue-800 border border-blue-300'
-                          : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          ? 'bg-blue-800 text-white border-blue-950'
+                          : 'bg-amber-700 text-white border-amber-900'
                       }`}
                     >
                       {libro.condition}
                     </span>
 
-                    {/* Sello de entregado si corresponde */}
+                    {/* Sello de entregado */}
                     {libro.isDelivered && (
-                      <div className="absolute inset-0 bg-emerald-950/40 backdrop-blur-[1px] flex items-center justify-center">
-                        <div className="bg-emerald-600 text-white px-3 py-1.5 rounded-full font-bold text-xs flex items-center gap-1.5 shadow-md">
-                          <CheckCircle2 className="w-4 h-4" />
-                          ¡Entregado a un compañero!
+                      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px] flex items-center justify-center p-3">
+                        <div className="bg-emerald-700 text-white px-4 py-2 rounded-xl font-extrabold text-sm flex items-center gap-2 shadow-lg border border-emerald-500">
+                          <CheckCircle2 className="w-5 h-5 shrink-0" />
+                          <span>¡Entregado a un compañero!</span>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Datos del libro */}
-                  <div className="p-4 space-y-2">
-                    <h2 className="font-bold text-slate-900 text-base leading-snug line-clamp-2">
+                  {/* Datos del libro con tamaño legible >= 16px */}
+                  <div className="p-4 space-y-2.5">
+                    <h2 className="font-extrabold text-slate-950 text-lg leading-tight line-clamp-2">
                       {libro.title}
                     </h2>
 
                     {libro.notes && (
-                      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed bg-slate-50 p-2 rounded-lg border border-slate-100">
+                      <p className="text-base text-slate-800 line-clamp-2 leading-relaxed bg-slate-100/80 p-2.5 rounded-xl border border-slate-200 font-medium">
                         {libro.notes}
                       </p>
                     )}
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-600 pt-1">
                       <span>
                         {libro.contactName
-                          ? `Ofrecido por: ${libro.contactName}`
-                          : 'Disponible en el instituto'}
+                          ? `Compañero: ${libro.contactName}`
+                          : 'Disponible para entrega en el instituto'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Acciones del libro */}
-                <div className="p-4 pt-0 border-t border-slate-100 mt-2">
+                {/* Acciones del libro: botón secundario neutro/outline para no competir con el FAB primario */}
+                <div className="p-4 pt-0 border-t-2 border-slate-100 mt-2">
                   {!libro.isDelivered ? (
                     <button
+                      type="button"
                       onClick={() => marcarComoEntregado(libro.id, libro.title)}
-                      className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold text-xs rounded-xl shadow-xs transition-all"
+                      className="w-full mt-3 min-h-[48px] flex items-center justify-center gap-2 py-3 px-4 bg-white border-2 border-emerald-800 hover:bg-emerald-50 active:bg-emerald-100 text-emerald-950 font-extrabold text-base rounded-xl transition-all cursor-pointer"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="w-5 h-5 stroke-[2.5] text-emerald-700" />
                       Marcar como entregado
                     </button>
                   ) : (
                     <div className="flex items-center gap-2 mt-3">
                       <button
+                        type="button"
                         onClick={() => restaurarLibro(libro.id, libro.title)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-all"
+                        className="flex-1 min-h-[48px] flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-900 font-bold text-sm rounded-xl transition-all cursor-pointer"
                         title="Devolver a la lista de disponibles"
                       >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        Restaurar
+                        <RotateCcw className="w-4 h-4 text-slate-700" />
+                        Restaurar a disponibles
                       </button>
                       <button
+                        type="button"
                         onClick={() => eliminarDefinitivo(libro.id, libro.title)}
-                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                        className="min-h-[48px] px-3 text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-xl transition-all cursor-pointer"
                         title="Eliminar registro"
+                        aria-label="Eliminar registro definitivamente"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5" />
                       </button>
                     </div>
                   )}
@@ -801,26 +822,27 @@ export default function App() {
             </div>
 
             {/* Formulario */}
-            <form onSubmit={manejarPublicar} className="p-6 overflow-y-auto space-y-4">
+            <form onSubmit={manejarPublicar} className="p-5 sm:p-6 overflow-y-auto space-y-4">
               {errorFormulario && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3.5 bg-rose-50 border-2 border-rose-300 rounded-2xl text-rose-950 text-sm font-bold flex items-center gap-2.5">
+                  <AlertCircle className="w-5 h-5 shrink-0 text-rose-700" />
                   <span>{errorFormulario}</span>
                 </div>
               )}
 
               {/* 1. TÍTULO DEL LIBRO (Ej: Matemáticas de 2.º año) */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Título del libro o artículo <span className="text-rose-500">*</span>
+                <label htmlFor="campo-titulo-libro" className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+                  Título del libro o curso <span className="text-rose-600">*</span>
                 </label>
                 <input
+                  id="campo-titulo-libro"
                   type="text"
                   required
                   value={nuevoTitulo}
                   onChange={(e) => setNuevoTitulo(e.target.value)}
                   placeholder="Ej: Matemáticas de 2.º año"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl text-base font-semibold text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-600"
                 />
                 {/* Botón de sugerencia rápida para la prueba requerida */}
                 <button
@@ -831,22 +853,23 @@ export default function App() {
                     setNuevoEstado('Bueno');
                     setNuevasNotas('Editorial Santillana. En excelente estado, con todas las páginas.');
                   }}
-                  className="mt-1 text-[11px] text-amber-700 hover:text-amber-800 font-semibold underline inline-flex items-center gap-1"
+                  className="mt-1.5 text-xs text-amber-800 hover:text-amber-950 font-bold underline inline-flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Sparkles className="w-3 h-3" />
+                  <Sparkles className="w-3.5 h-3.5" />
                   Rellenar sugerencia: "Matemáticas de 2.º año"
                 </button>
               </div>
 
               {/* 2. MATERIA */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Materia <span className="text-rose-500">*</span>
+                <label htmlFor="campo-materia-libro" className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+                  Materia escolar <span className="text-rose-600">*</span>
                 </label>
                 <select
+                  id="campo-materia-libro"
                   value={nuevaMateria}
                   onChange={(e) => setNuevaMateria(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl text-base font-semibold text-slate-950 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-600"
                 >
                   {MATERIAS_COMUNES.map((m) => (
                     <option key={m} value={m}>
@@ -856,21 +879,27 @@ export default function App() {
                 </select>
 
                 {nuevaMateria === 'Otra materia' && (
-                  <input
-                    type="text"
-                    required
-                    value={materiaPersonalizada}
-                    onChange={(e) => setMateriaPersonalizada(e.target.value)}
-                    placeholder="Escribe el nombre de la materia..."
-                    className="mt-2 w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
-                  />
+                  <div className="mt-2">
+                    <label htmlFor="campo-otra-materia" className="block text-xs font-bold text-slate-700 mb-1">
+                      Nombre específico de la materia:
+                    </label>
+                    <input
+                      id="campo-otra-materia"
+                      type="text"
+                      required
+                      value={materiaPersonalizada}
+                      onChange={(e) => setMateriaPersonalizada(e.target.value)}
+                      placeholder="Escribe el nombre de la materia..."
+                      className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl text-base font-medium text-slate-950"
+                    />
+                  </div>
                 )}
               </div>
 
               {/* 3. ESTADO DEL LIBRO */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Estado del libro <span className="text-rose-500">*</span>
+                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+                  Estado de conservación del libro <span className="text-rose-600">*</span>
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {(['Excelente', 'Bueno', 'Aceptable'] as BookCondition[]).map(
@@ -879,10 +908,10 @@ export default function App() {
                         key={estado}
                         type="button"
                         onClick={() => setNuevoEstado(estado)}
-                        className={`py-2 px-3 rounded-xl border text-xs font-bold text-center transition-all ${
+                        className={`min-h-[48px] py-2 px-3 rounded-xl border-2 text-sm font-bold text-center transition-all cursor-pointer ${
                           nuevoEstado === estado
-                            ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-slate-950 text-white border-slate-950 shadow-sm'
+                            : 'bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200'
                         }`}
                       >
                         {estado}
@@ -890,99 +919,106 @@ export default function App() {
                     )
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  {nuevoEstado === 'Excelente' && 'Sin marcas, como nuevo.'}
+                <p className="text-xs font-medium text-slate-600 mt-1">
+                  {nuevoEstado === 'Excelente' && 'Sin marcas ni hojas dobladas, como nuevo.'}
                   {nuevoEstado === 'Bueno' && 'Bien cuidado, puede tener algún apunte a lápiz.'}
-                  {nuevoEstado === 'Aceptable' && 'Usado, esquinas dobladas o subrayados, pero legible.'}
+                  {nuevoEstado === 'Aceptable' && 'Usado, marcas o esquinas dobladas, pero totalmente legible.'}
                 </p>
               </div>
 
               {/* 4. FOTO DEL ARTÍCULO */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Foto del libro
+                <label htmlFor="campo-foto-libro" className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+                  Foto del libro (desde la cámara o galería)
                 </label>
 
                 {nuevaFotoUrl ? (
-                  <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-16/9 mb-2">
+                  <div className="relative rounded-2xl overflow-hidden border-2 border-slate-300 bg-slate-100 aspect-16/9 mb-2">
                     <img
                       src={nuevaFotoUrl}
-                      alt="Vista previa"
+                      alt="Vista previa del libro subido"
                       className="w-full h-full object-cover"
                     />
                     <button
                       type="button"
                       onClick={() => setNuevaFotoUrl('')}
-                      className="absolute top-2 right-2 bg-slate-900/70 hover:bg-slate-900 text-white p-1 rounded-full text-xs"
+                      className="absolute top-2 right-2 bg-slate-950/80 hover:bg-slate-950 text-white p-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-md cursor-pointer"
                       title="Quitar foto"
                     >
                       <X className="w-4 h-4" />
+                      <span>Cambiar</span>
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-300 hover:border-amber-500 rounded-2xl cursor-pointer bg-slate-50/50 hover:bg-amber-50/30 transition-all text-center">
-                    <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
-                      <Camera className="w-5 h-5" />
+                  <label
+                    htmlFor="campo-foto-libro"
+                    className="flex flex-col items-center justify-center gap-2 p-5 border-2 border-dashed border-slate-400 hover:border-amber-600 rounded-2xl cursor-pointer bg-slate-50 hover:bg-amber-50/40 transition-all text-center"
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-900 flex items-center justify-center">
+                      <Camera className="w-6 h-6" />
                     </div>
                     <div className="space-y-0.5">
-                      <span className="text-xs font-bold text-slate-700">
-                        {procesandoFoto ? 'Comprimiendo imagen...' : 'Subir o tomar foto con el celular'}
+                      <span className="text-sm font-bold text-slate-900">
+                        {procesandoFoto ? 'Comprimiendo foto...' : 'Tocar para tomar foto o elegir de la galería'}
                       </span>
-                      <p className="text-[10px] text-slate-400">
-                        Se optimiza automáticamente para no ocupar espacio
+                      <p className="text-xs text-slate-600 font-medium">
+                        Se ajusta automáticamente para que cargue rápido
                       </p>
                     </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={manejarSeleccionFoto}
-                      disabled={procesandoFoto}
-                      className="hidden"
-                    />
                   </label>
                 )}
-                <p className="text-[11px] text-slate-400 mt-1">
-                  * Si no subes foto, se asignará automáticamente una imagen ilustrativa de {nuevaMateria}.
+                <input
+                  id="campo-foto-libro"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={manejarSeleccionFoto}
+                  disabled={procesandoFoto}
+                  className="hidden"
+                />
+                <p className="text-xs text-slate-600 font-medium mt-1">
+                  * Si no tienes foto a mano, se asignará automáticamente una imagen ilustrativa de {nuevaMateria}.
                 </p>
               </div>
 
               {/* 5. NOTAS ADICIONALES (Editorial, curso, etc.) */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label htmlFor="campo-notas-libro" className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
                   Notas adicionales (Opcional)
                 </label>
                 <textarea
+                  id="campo-notas-libro"
                   rows={2}
                   value={nuevasNotas}
                   onChange={(e) => setNuevasNotas(e.target.value)}
-                  placeholder="Ej: Editorial, si tiene las tapas forradas o algún detalle..."
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="Ej: Editorial Santillana, tiene tapas forradas o actividades completas..."
+                  className="w-full px-4 py-2.5 bg-white border-2 border-slate-300 rounded-xl text-base font-medium text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-600"
                 />
               </div>
 
               {/* 6. NOMBRE DEL ESTUDIANTE / CONTACTO */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Tu nombre y curso (Opcional)
+                <label htmlFor="campo-contacto-alumno" className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+                  Tu nombre y división para coordinar la entrega (Opcional)
                 </label>
                 <input
+                  id="campo-contacto-alumno"
                   type="text"
                   value={nuevoContacto}
                   onChange={(e) => setNuevoContacto(e.target.value)}
-                  placeholder="Ej: Mateo (3.º B)"
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="Ej: Mateo (3.º B) en el recreo de las 10:30"
+                  className="w-full px-4 py-3 bg-white border-2 border-slate-300 rounded-xl text-base font-medium text-slate-950 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-600"
                 />
               </div>
 
-              {/* Botón de envío */}
+              {/* ÚNICO BOTÓN PRINCIPAL DESTACADO EN EL FORMULARIO */}
               <div className="pt-2">
                 <button
                   type="submit"
                   disabled={procesandoFoto}
-                  className="w-full py-3 px-4 bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-bold text-sm rounded-xl shadow-md shadow-amber-600/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full min-h-[52px] py-3.5 px-5 bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-extrabold text-base rounded-2xl shadow-lg shadow-amber-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-5 h-5 stroke-[2.5]" />
                   Publicar libro en el trueque
                 </button>
               </div>

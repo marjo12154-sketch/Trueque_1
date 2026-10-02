@@ -93,5 +93,28 @@ No reescribas la lógica que ya funciona. Dame únicamente:
 CRITERIO DE ACEPTACIÓN: Mantenés las funciones anteriores intactas, la interfaz es intuitiva en pantallas pequeñas y me entregás el bloque formateado para PROMPTS.md.
 ```
 
+## M4 · Validaciones y manejo de errores
+
+```text
+ROL: Sos un QA Tester de software enfocado en seguridad y estabilidad de aplicaciones web.
+
+CONTEXTO: Estoy refinando la app "Trueque Escolar". Necesito implementar la Mejora 4 (M4): Validaciones y manejo de errores para garantizar que la app no se rompa ante entradas inválidas.
+
+TAREA Y REQUISITOS:
+1. Actuá como un tester exigente y dame 10 formas concretas de intentar romper esta app desde la interfaz (campos vacíos, texto en números, números negativos, textos de 500 caracteres, doble clic en guardar, pérdida de conexión, etc.).
+2. Para cada una, decime: qué pasaría hoy, qué debería pasar, y el código JS/HTML mínimo que lo evita.
+3. Generá una tabla de Markdown con 5 intentos de prueba específicos, mostrando el escenario, el resultado "Antes" (sin validación) y el resultado "Después" (con validación). Esta tabla la incluiré en el README.md.
+4. Asegurate de que cualquier error muestre un mensaje visual claro en español para el usuario (usando el contenedor de mensajes de la app) y que NUNCA lance un error en la consola del navegador.
+
+RESTRICCIONES Y FORMATO DE SALIDA:
+No reescribas el diseño ni agregues funciones nuevas. Dame únicamente:
+1. Las 10 formas de romper la app con sus soluciones mínimas en código indicando en qué archivo van.
+2. La tabla de 5 intentos para el README.
+3. El contenido exacto en formato Markdown para agregar a mi archivo PROMPTS.md bajo el encabezado "## M4 · Validaciones y manejo de errores".
+
+CRITERIO DE ACEPTACIÓN: Mantenés la app funcional y cualquier entrada inválida se gestiona con mensajes en pantalla sin arrojar errores en la consola.
+```
+
+
 
 

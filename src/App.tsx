@@ -232,12 +232,13 @@ export default function App() {
   const [nuevoContacto, setNuevoContacto] = useState('');
   const [errorFormulario, setErrorFormulario] = useState('');
   const [procesandoFoto, setProcesandoFoto] = useState(false);
+  const [enviandoFormulario, setEnviandoFormulario] = useState(false); // Previene doble clic
 
   // Mensaje flotante de notificación (Toast feedback)
-  const [toast, setToast] = useState<{ mensaje: string; tipo?: 'exito' | 'info' } | null>(null);
+  const [toast, setToast] = useState<{ mensaje: string; tipo?: 'exito' | 'info' | 'error' } | null>(null);
   const toastTimeoutRef = useRef<number | null>(null);
 
-  const mostrarToast = (mensaje: string, tipo: 'exito' | 'info' = 'exito') => {
+  const mostrarToast = (mensaje: string, tipo: 'exito' | 'info' | 'error' = 'exito') => {
     if (toastTimeoutRef.current) {
       window.clearTimeout(toastTimeoutRef.current);
     }
@@ -248,66 +249,112 @@ export default function App() {
   };
 
   // --------------------------------------------------------------------------
-  // FUNCIÓN 1: PUBLICAR UN ARTÍCULO
+  // FUNCIÓN 1: PUBLICAR UN ARTÍCULO CON VALIDACIONES ESTRICTAS DE QA
   // --------------------------------------------------------------------------
   const manejarPublicar = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const tituloLimpio = nuevoTitulo.trim();
-    if (!tituloLimpio) {
-      setErrorFormulario('Por favor escribe el nombre del libro para que otros estudiantes lo reconozcan.');
+    // 1. Evitar doble clic concurrente
+    if (enviandoFormulario) return;
+
+    // 2. Sanitizar y validar título (no vacío, no solo espacios, mínimo 3 caracteres)
+    const tituloLimpio = nuevoTitulo.trim().replace(/\s+/g, ' ');
+    if (!tituloLimpio || tituloLimpio.length < 3) {
+      setErrorFormulario('Por favor escribe un título claro de al menos 3 caracteres (ej: "Matemáticas 2.º año").');
       return;
     }
 
-    const materiaFinal =
-      nuevaMateria === 'Otra materia'
-        ? materiaPersonalizada.trim() || 'General'
-        : nuevaMateria;
+    if (tituloLimpio.length > 80) {
+      setErrorFormulario('El título es demasiado largo (máximo 80 caracteres permitidos).');
+      return;
+    }
 
-    // Si el usuario no subió una foto propia, asignamos una foto ilustrativa de calidad por materia
-    const fotoFinal =
-      nuevaFotoUrl ||
-      PORTADAS_POR_MATERIA[materiaFinal] ||
-      PORTADAS_POR_MATERIA['default'];
+    // 3. Validar si seleccionó "Otra materia"
+    let materiaFinal = nuevaMateria;
+    if (nuevaMateria === 'Otra materia') {
+      const materiaLimpia = materiaPersonalizada.trim().replace(/\s+/g, ' ');
+      if (!materiaLimpia || materiaLimpia.length < 2) {
+        setErrorFormulario('Por favor escribe el nombre de la materia (mínimo 2 letras).');
+        return;
+      }
+      if (materiaLimpia.length > 40) {
+        setErrorFormulario('El nombre de la materia es demasiado largo (máximo 40 caracteres).');
+        return;
+      }
+      materiaFinal = materiaLimpia;
+    }
 
-    const nuevoLibro: BookItem = {
-      id: 'libro-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
-      title: tituloLimpio,
-      subject: materiaFinal,
-      condition: nuevoEstado,
-      photoUrl: fotoFinal,
-      notes: nuevasNotas.trim() || undefined,
-      contactName: nuevoContacto.trim() || undefined,
-      isDelivered: false,
-      createdAt: Date.now()
-    };
+    // 4. Validar límite de caracteres en notas y contacto
+    const notasLimpias = nuevasNotas.trim().replace(/\s+/g, ' ');
+    if (notasLimpias.length > 250) {
+      setErrorFormulario('Las notas no pueden superar los 250 caracteres.');
+      return;
+    }
 
-    setLibros((anteriores) => [nuevoLibro, ...anteriores]);
+    const contactoLimpio = nuevoContacto.trim().replace(/\s+/g, ' ');
+    if (contactoLimpio.length > 50) {
+      setErrorFormulario('El dato de contacto no puede superar los 50 caracteres.');
+      return;
+    }
 
-    // Limpiar formulario y cerrar modal
-    setNuevoTitulo('');
-    setNuevaMateria('Matemáticas');
-    setMateriaPersonalizada('');
-    setNuevoEstado('Bueno');
-    setNuevaFotoUrl('');
-    setNuevasNotas('');
-    setNuevoContacto('');
-    setErrorFormulario('');
-    setModalAbierto(false);
+    try {
+      setEnviandoFormulario(true);
 
-    setPestanaActiva('disponibles');
+      // Si el usuario no subió una foto propia, asignamos una foto ilustrativa de calidad por materia
+      const fotoFinal =
+        nuevaFotoUrl ||
+        PORTADAS_POR_MATERIA[materiaFinal] ||
+        PORTADAS_POR_MATERIA['default'];
 
-    mostrarToast(`¡Listo! "${tituloLimpio}" ya está publicado y visible para tus compañeros.`);
+      const nuevoLibro: BookItem = {
+        id: 'libro-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+        title: tituloLimpio,
+        subject: materiaFinal,
+        condition: nuevoEstado,
+        photoUrl: fotoFinal,
+        notes: notasLimpias || undefined,
+        contactName: contactoLimpio || undefined,
+        isDelivered: false,
+        createdAt: Date.now()
+      };
+
+      setLibros((anteriores) => [nuevoLibro, ...anteriores]);
+
+      // Limpiar formulario y cerrar modal
+      setNuevoTitulo('');
+      setNuevaMateria('Matemáticas');
+      setMateriaPersonalizada('');
+      setNuevoEstado('Bueno');
+      setNuevaFotoUrl('');
+      setNuevasNotas('');
+      setNuevoContacto('');
+      setErrorFormulario('');
+      setModalAbierto(false);
+
+      setPestanaActiva('disponibles');
+
+      mostrarToast(`¡Listo! "${tituloLimpio}" ya está publicado y visible para tus compañeros.`);
+    } catch {
+      setErrorFormulario('Ocurrió un problema inesperado al guardar la publicación. Por favor intenta de nuevo.');
+    } finally {
+      setEnviandoFormulario(false);
+    }
   };
 
-  // Manejo de carga de archivo de foto desde cámara o galería
+  // Manejo seguro de carga de archivo de foto desde cámara o galería
   const manejarSeleccionFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const archivos = e.target.files;
     if (!archivos || archivos.length === 0) return;
 
     const archivo = archivos[0];
-    if (!archivo.type.startsWith('image/')) {
-      setErrorFormulario('Por favor selecciona un archivo que sea una foto o imagen válida.');
+    if (!archivo.type || !archivo.type.startsWith('image/')) {
+      setErrorFormulario('El archivo debe ser una imagen válida (JPG, PNG o WebP).');
+      return;
+    }
+
+    // Evitar procesar archivos excesivamente gigantes (> 25 MB)
+    if (archivo.size > 25 * 1024 * 1024) {
+      setErrorFormulario('La foto seleccionada es demasiado pesada. Elige una imagen menor a 25 MB.');
       return;
     }
 
@@ -316,9 +363,8 @@ export default function App() {
       setErrorFormulario('');
       const base64Optimizado = await comprimirImagen(archivo);
       setNuevaFotoUrl(base64Optimizado);
-    } catch (err) {
-      console.error('Error al procesar la foto:', err);
-      setErrorFormulario('No pudimos procesar esa foto. Por favor intenta con otra imagen o foto de tu cámara.');
+    } catch {
+      setErrorFormulario('No pudimos procesar esa foto. Por favor intenta con otra imagen o toma una foto directa.');
     } finally {
       setProcesandoFoto(false);
     }
@@ -675,6 +721,11 @@ export default function App() {
                       alt={libro.title}
                       className="w-full h-full object-cover"
                       loading="lazy"
+                      onError={(e) => {
+                        // Si falla la URL remota o hay corte de red, usamos portada genérica segura sin romper la consola
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = PORTADAS_POR_MATERIA['default'];
+                      }}
                     />
 
                     {/* Badge de Materia con alto contraste */}
@@ -839,6 +890,7 @@ export default function App() {
                   id="campo-titulo-libro"
                   type="text"
                   required
+                  maxLength={80}
                   value={nuevoTitulo}
                   onChange={(e) => setNuevoTitulo(e.target.value)}
                   placeholder="Ej: Matemáticas de 2.º año"
@@ -887,6 +939,7 @@ export default function App() {
                       id="campo-otra-materia"
                       type="text"
                       required
+                      maxLength={40}
                       value={materiaPersonalizada}
                       onChange={(e) => setMateriaPersonalizada(e.target.value)}
                       placeholder="Escribe el nombre de la materia..."
@@ -984,11 +1037,12 @@ export default function App() {
               {/* 5. NOTAS ADICIONALES (Editorial, curso, etc.) */}
               <div>
                 <label htmlFor="campo-notas-libro" className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
-                  Notas adicionales (Opcional)
+                  Notas adicionales (Opcional - máx. 250 caracteres)
                 </label>
                 <textarea
                   id="campo-notas-libro"
                   rows={2}
+                  maxLength={250}
                   value={nuevasNotas}
                   onChange={(e) => setNuevasNotas(e.target.value)}
                   placeholder="Ej: Editorial Santillana, tiene tapas forradas o actividades completas..."
@@ -999,11 +1053,12 @@ export default function App() {
               {/* 6. NOMBRE DEL ESTUDIANTE / CONTACTO */}
               <div>
                 <label htmlFor="campo-contacto-alumno" className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
-                  Tu nombre y división para coordinar la entrega (Opcional)
+                  Tu nombre y división para coordinar la entrega (Opcional - máx. 50 caracteres)
                 </label>
                 <input
                   id="campo-contacto-alumno"
                   type="text"
+                  maxLength={50}
                   value={nuevoContacto}
                   onChange={(e) => setNuevoContacto(e.target.value)}
                   placeholder="Ej: Mateo (3.º B) en el recreo de las 10:30"
@@ -1015,11 +1070,11 @@ export default function App() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={procesandoFoto}
-                  className="w-full min-h-[52px] py-3.5 px-5 bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-extrabold text-base rounded-2xl shadow-lg shadow-amber-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  disabled={procesandoFoto || enviandoFormulario}
+                  className="w-full min-h-[52px] py-3.5 px-5 bg-amber-600 hover:bg-amber-700 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-base rounded-2xl shadow-lg shadow-amber-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Plus className="w-5 h-5 stroke-[2.5]" />
-                  Publicar libro en el trueque
+                  {enviandoFormulario ? 'Guardando publicación...' : 'Publicar libro en el trueque'}
                 </button>
               </div>
             </form>

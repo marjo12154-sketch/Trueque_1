@@ -1,5 +1,15 @@
 export type BookCondition = 'Excelente' | 'Bueno' | 'Aceptable';
 
+export interface EvaluacionIA {
+  nivelEstimado: string;
+  materiaDetectada: string;
+  vidaUtilCiclos: number;
+  indiceAprovechamiento: number;
+  etiquetasCompatibilidad: string[];
+  consejoCuidado: string;
+  origen?: 'gemini_api' | 'regla_manual_contingencia';
+}
+
 export interface BookItem {
   id: string;
   title: string;
@@ -12,4 +22,5 @@ export interface BookItem {
   isDelivered: boolean;
   createdAt: number;
   deliveredAt?: number;
+  evaluacionIA?: EvaluacionIA;
 }

@@ -23,9 +23,12 @@ import {
   PackageCheck,
   AlertCircle,
   Download,
-  Database
+  Database,
+  Brain,
+  Activity,
+  ShieldCheck
 } from 'lucide-react';
-import { BookItem, BookCondition } from './types';
+import { BookItem, BookCondition, EvaluacionIA } from './types';
 
 // ============================================================================
 // MATERIAS PREDEFINIDAS DEL INSTITUTO
@@ -76,6 +79,15 @@ const LIBROS_INICIALES: BookItem[] = [
     contactName: 'Sofía (3.° B)',
     isDelivered: false,
     createdAt: Date.now() - 1000 * 60 * 60 * 24, // hace 1 día
+    evaluacionIA: {
+      nivelEstimado: '2.º año Secundaria',
+      materiaDetectada: 'Matemáticas',
+      vidaUtilCiclos: 2,
+      indiceAprovechamiento: 88,
+      etiquetasCompatibilidad: ['Santillana', 'Álgebra', 'Geometría', 'Secundaria'],
+      consejoCuidado: 'Borrar apuntes a lápiz antes de entregar para que el compañero resuelva de cero.',
+      origen: 'gemini_api'
+    }
   },
   {
     id: 'demo-2',
@@ -88,6 +100,15 @@ const LIBROS_INICIALES: BookItem[] = [
     contactName: 'Martín (2.° A)',
     isDelivered: false,
     createdAt: Date.now() - 1000 * 60 * 60 * 12,
+    evaluacionIA: {
+      nivelEstimado: '1.º año Secundaria',
+      materiaDetectada: 'Lengua y Literatura',
+      vidaUtilCiclos: 3,
+      indiceAprovechamiento: 96,
+      etiquetasCompatibilidad: ['Gramática', 'Lecturas', 'Sin marcas', 'Forrado'],
+      consejoCuidado: 'Mantener el forrado transparente original para proteger las tapas.',
+      origen: 'gemini_api'
+    }
   },
   {
     id: 'demo-3',
@@ -100,6 +121,15 @@ const LIBROS_INICIALES: BookItem[] = [
     contactName: 'Lucía (4.° C)',
     isDelivered: false,
     createdAt: Date.now() - 1000 * 60 * 60 * 48,
+    evaluacionIA: {
+      nivelEstimado: '3.º año Secundaria',
+      materiaDetectada: 'Biología y Geología',
+      vidaUtilCiclos: 1,
+      indiceAprovechamiento: 70,
+      etiquetasCompatibilidad: ['Saber Hacer', 'Ecosistemas', 'Geología'],
+      consejoCuidado: 'Reforzar lomo con cinta adhesiva transparente para evitar desprendimientos.',
+      origen: 'gemini_api'
+    }
   }
 ];
 
@@ -234,6 +264,11 @@ export default function App() {
   const [procesandoFoto, setProcesandoFoto] = useState(false);
   const [enviandoFormulario, setEnviandoFormulario] = useState(false); // Previene doble clic
 
+  // Estado del Sello de IA de Trueque Escolar (Salida Estructurada)
+  const [evaluacionActual, setEvaluacionActual] = useState<EvaluacionIA | null>(null);
+  const [analizandoIA, setAnalizandoIA] = useState(false);
+  const [avisoIA, setAvisoIA] = useState('');
+
   // Mensaje flotante de notificación (Toast feedback)
   const [toast, setToast] = useState<{ mensaje: string; tipo?: 'exito' | 'info' | 'error' } | null>(null);
   const toastTimeoutRef = useRef<number | null>(null);
@@ -246,6 +281,52 @@ export default function App() {
     toastTimeoutRef.current = window.setTimeout(() => {
       setToast(null);
     }, 3800);
+  };
+
+  // --------------------------------------------------------------------------
+  // MEJORA 5 (M5): LLAMADA A LA API DE GEMINI CON SALIDA ESTRUCTURADA
+  // --------------------------------------------------------------------------
+  const analizarLibroConIA = async () => {
+    const tituloLimpio = nuevoTitulo.trim();
+    if (!tituloLimpio || tituloLimpio.length < 3) {
+      setErrorFormulario('Para evaluar con IA, escribe al menos el título o materia del libro (mín. 3 letras).');
+      return;
+    }
+
+    try {
+      setAnalizandoIA(true);
+      setErrorFormulario('');
+      setAvisoIA('');
+
+      const res = await fetch('/api/evaluar-libro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo: tituloLimpio,
+          estado: nuevoEstado,
+          notas: nuevasNotas.trim(),
+          fotoBase64: nuevaFotoUrl
+        })
+      });
+
+      const data = await res.json();
+      if (data && data.datos) {
+        setEvaluacionActual(data.datos);
+        if (data.datos.materiaDetectada && MATERIAS_COMUNES.includes(data.datos.materiaDetectada)) {
+          setNuevaMateria(data.datos.materiaDetectada);
+        }
+        if (data.aviso) {
+          setAvisoIA(data.aviso);
+        }
+        mostrarToast('¡Evaluación estructurada completada con éxito!');
+      } else {
+        throw new Error('Respuesta inválida');
+      }
+    } catch {
+      mostrarToast('No se pudo conectar con la IA de Gemini; los datos se pueden cargar manualmente sin problema.', 'info');
+    } finally {
+      setAnalizandoIA(false);
+    }
   };
 
   // --------------------------------------------------------------------------
@@ -315,7 +396,8 @@ export default function App() {
         notes: notasLimpias || undefined,
         contactName: contactoLimpio || undefined,
         isDelivered: false,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        evaluacionIA: evaluacionActual || undefined
       };
 
       setLibros((anteriores) => [nuevoLibro, ...anteriores]);
@@ -329,6 +411,8 @@ export default function App() {
       setNuevasNotas('');
       setNuevoContacto('');
       setErrorFormulario('');
+      setEvaluacionActual(null);
+      setAvisoIA('');
       setModalAbierto(false);
 
       setPestanaActiva('disponibles');
@@ -776,6 +860,52 @@ export default function App() {
                           : 'Disponible para entrega en el instituto'}
                       </span>
                     </div>
+
+                    {/* Sello de IA de Trueque Escolar: Ficha de evaluación técnica estructurada */}
+                    {libro.evaluacionIA && (
+                      <div className="bg-purple-50/80 border border-purple-200 rounded-xl p-3 space-y-2 mt-2">
+                        <div className="flex items-center justify-between gap-1 text-xs font-bold text-purple-900">
+                          <span className="flex items-center gap-1.5">
+                            <Brain className="w-3.5 h-3.5 text-purple-700" />
+                            Evaluación Pedagógica
+                          </span>
+                          <span className="bg-purple-200/90 text-purple-950 font-extrabold px-2 py-0.5 rounded-md text-[10px]">
+                            {libro.evaluacionIA.nivelEstimado}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-white p-2 rounded-lg border border-purple-100 flex flex-col">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Aprovechamiento</span>
+                            <span className="font-black text-purple-950 text-sm">
+                              {libro.evaluacionIA.indiceAprovechamiento} / 100
+                            </span>
+                          </div>
+                          <div className="bg-white p-2 rounded-lg border border-purple-100 flex flex-col">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Vida útil</span>
+                            <span className="font-black text-purple-950 text-sm">
+                              {libro.evaluacionIA.vidaUtilCiclos} {libro.evaluacionIA.vidaUtilCiclos === 1 ? 'año lectivo' : 'años lectivos'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {libro.evaluacionIA.etiquetasCompatibilidad && libro.evaluacionIA.etiquetasCompatibilidad.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-0.5">
+                            {libro.evaluacionIA.etiquetasCompatibilidad.map((tag, i) => (
+                              <span key={i} className="text-[10px] font-bold bg-white text-slate-800 px-2 py-0.5 rounded-md border border-purple-200/60">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {libro.evaluacionIA.consejoCuidado && (
+                          <p className="text-xs font-medium text-purple-950 leading-snug bg-white/80 p-2 rounded-lg border border-purple-100">
+                            💡 <span className="font-bold">Consejo:</span> {libro.evaluacionIA.consejoCuidado}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1032,6 +1162,78 @@ export default function App() {
                 <p className="text-xs text-slate-600 font-medium mt-1">
                   * Si no tienes foto a mano, se asignará automáticamente una imagen ilustrativa de {nuevaMateria}.
                 </p>
+              </div>
+
+              {/* BOTÓN Y PANEL DEL SELLO DE IA (MEJORA 5) */}
+              <div className="bg-purple-50/80 border border-purple-200 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-purple-200 text-purple-900 flex items-center justify-center font-bold text-xs shrink-0">
+                      <Brain className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-purple-950 uppercase tracking-wider leading-tight">
+                        Sello Inteligente de Reutilización
+                      </h4>
+                      <p className="text-[11px] text-purple-800 leading-tight">
+                        Calcula compatibilidad, nivel y vida útil con IA
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={analizarLibroConIA}
+                    disabled={analizandoIA || !nuevoTitulo.trim()}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-purple-700 hover:bg-purple-800 active:scale-95 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-xs shrink-0"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {analizandoIA ? 'Evaluando...' : 'Evaluar con IA'}
+                  </button>
+                </div>
+
+                {avisoIA && (
+                  <p className="text-xs font-medium text-amber-900 bg-amber-100/80 p-2 rounded-xl border border-amber-200">
+                    ℹ️ {avisoIA}
+                  </p>
+                )}
+
+                {evaluacionActual && (
+                  <div className="bg-white rounded-xl p-3 border border-purple-200 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-slate-600">Nivel escolar sugerido:</span>
+                      <span className="text-purple-950 bg-purple-100 px-2 py-0.5 rounded-md font-extrabold">
+                        {evaluacionActual.nivelEstimado}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
+                        <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Aprovechamiento</span>
+                        <span className="text-base font-black text-purple-950">
+                          {evaluacionActual.indiceAprovechamiento} / 100
+                        </span>
+                      </div>
+                      <div className="bg-slate-50 p-2 rounded-lg border border-slate-200">
+                        <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">Vida útil</span>
+                        <span className="text-base font-black text-purple-950">
+                          {evaluacionActual.vidaUtilCiclos} {evaluacionActual.vidaUtilCiclos === 1 ? 'año lectivo' : 'años lectivos'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1">
+                      {evaluacionActual.etiquetasCompatibilidad.map((tag, i) => (
+                        <span key={i} className="text-[10px] font-bold bg-purple-50 text-purple-900 border border-purple-200 px-2 py-0.5 rounded-md">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <p className="text-xs text-purple-950 bg-purple-50/50 p-2 rounded-lg border border-purple-100">
+                      💡 <span className="font-bold">Consejo:</span> {evaluacionActual.consejoCuidado}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* 5. NOTAS ADICIONALES (Editorial, curso, etc.) */}

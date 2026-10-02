@@ -115,6 +115,34 @@ No reescribas el diseño ni agregues funciones nuevas. Dame únicamente:
 CRITERIO DE ACEPTACIÓN: Mantenés la app funcional y cualquier entrada inválida se gestiona con mensajes en pantalla sin arrojar errores en la consola.
 ```
 
+## M5 · Inteligencia con salida estructurada
+
+```text
+MEJORA 5
+M5
+Que piense
+La inteligencia artificial hace algo útil dentro de la app: el sello de tu ejercicio. Con salida estructurada y con plan por si falla.
+
+Leé el sello de IA de tu ejercicio: eso es lo que la app tiene que lograr, no un chat pegado encima.
+Pedí la integración con salida estructurada (responseSchema o JSON obligatorio) para que la app consuma la respuesta como dato, no como texto.
+La llave de API va en una variable de entorno. Nunca en el código, nunca en GitHub.
+Probá qué pasa si la IA no responde: la app debe seguir usable y mostrar un mensaje honesto.
+Si no conseguís acceso a la API, implementá la regla de decisión a mano y documentá en el README por qué y cómo la resolviste. Eso vale el mismo puntaje si está bien argumentado.
+Integrá una llamada a la API de Gemini dentro de la app para esta tarea concreta:
+[SELLO DE IA DE MI EJERCICIO].
+
+Requisitos:
+1. La respuesta debe venir como JSON con un esquema fijo (responseSchema), no como texto libre. Dame el esquema.
+2. La app consume ese JSON y lo muestra en pantalla como dato, no como párrafo.
+3. La llave de API se lee de una variable de entorno; mostrame cómo configurarla.
+4. Manejo de fallo: qué se muestra si la IA no responde, responde lento o devuelve algo que no cumple el esquema.
+5. Un ejemplo de respuesta de prueba para desarrollar sin gastar llamadas.
+EVIDENCIA OBLIGATORIA: Captura del JSON recibido (E5-json.png), captura del resultado en pantalla (E5-app.png) y captura del estado de error (E5-falla.png).
+COMMIT: git commit -m "M5: inteligencia con salida estructurada"
+CRITERIO DE ACEPTACIÓN: La función inteligente funciona y la app no se cae cuando la IA no responde. Si no se cumple, el peldaño no cuenta, aunque haya código nuevo.
+```
+
+
 
 
 

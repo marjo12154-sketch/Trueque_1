@@ -1,0 +1,6 @@
+{
+  "name": "Trueque Escolar",
+  "description": "Plataforma de intercambio y donación de libros de texto escolares entre estudiantes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

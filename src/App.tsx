@@ -21,7 +21,9 @@ import {
   Info,
   Check,
   PackageCheck,
-  AlertCircle
+  AlertCircle,
+  Download,
+  Database
 } from 'lucide-react';
 import { BookItem, BookCondition } from './types';
 
@@ -363,6 +365,34 @@ export default function App() {
   };
 
   // --------------------------------------------------------------------------
+  // MEJORA 2: EXPORTAR DATOS A ARCHIVO JSON (RESPALDO)
+  // --------------------------------------------------------------------------
+  const exportarDatosJSON = () => {
+    try {
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(libros, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', `trueque_escolar_libros_${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      mostrarToast('Archivo JSON de respaldo descargado con éxito.');
+    } catch (err) {
+      console.error('Error al exportar datos a JSON:', err);
+      mostrarToast('No se pudo generar el archivo de respaldo.', 'info');
+    }
+  };
+
+  // Restaurar datos iniciales de prueba (limpiar modificaciones locales)
+  const reiniciarDatosEjemplo = () => {
+    if (window.confirm('¿Deseas restaurar la lista a los libros de prueba iniciales?')) {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      setLibros(LIBROS_INICIALES);
+      mostrarToast('Datos restaurados al estado inicial.');
+    }
+  };
+
+  // --------------------------------------------------------------------------
   // FUNCIÓN 2: BUSCAR POR MATERIA O PALABRA CLAVE
   // --------------------------------------------------------------------------
   const librosFiltrados = useMemo(() => {
@@ -431,17 +461,29 @@ export default function App() {
             </div>
           </div>
 
-          {/* Botón rápido de publicar para desktop / tablet */}
-          <button
-            onClick={() => {
-              setErrorFormulario('');
-              setModalAbierto(true);
-            }}
-            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-semibold text-sm rounded-xl shadow-sm transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Publicar libro
-          </button>
+          {/* Acciones de cabecera: Respaldar JSON y Publicar */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={exportarDatosJSON}
+              title="Descargar copia de seguridad en JSON"
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-all cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden sm:inline">Exportar JSON</span>
+            </button>
+
+            {/* Botón rápido de publicar para desktop / tablet */}
+            <button
+              onClick={() => {
+                setErrorFormulario('');
+                setModalAbierto(true);
+              }}
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-semibold text-sm rounded-xl shadow-sm transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Publicar libro
+            </button>
+          </div>
         </div>
       </header>
 

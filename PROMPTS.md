@@ -43,3 +43,29 @@ No reescribas lo que ya funciona ni me des todo el código de nuevo. Dame única
 CRITERIO DE ACEPTACIÓN: Mantenés todo el código anterior intacto y solo me entregás el parche exacto para solucionar esta función puntual.
 ```
 
+## M2 · Persistencia de datos
+
+```text
+ROL: Sos un desarrollador senior de aplicaciones web.
+
+CONTEXTO: Estoy refinando la app "Trueque Escolar". Necesito implementar la Mejora 2 (M2): Persistencia de datos para que la información no se pierda al cerrar o recargar la app.
+
+TAREA Y REQUISITOS:
+Quiero que los datos de la app no se pierdan al cerrarla utilizando `localStorage`.
+
+Por favor, explicame de forma clara:
+1. Dónde queda guardada la información exactamente.
+2. Qué pasa si el usuario borra el caché o cambia de dispositivo.
+3. Cómo hago para exportar los datos a un archivo JSON, por si quiero respaldarlos.
+
+RESTRICCIONES Y FORMATO DE SALIDA:
+No reescribas lo que ya funciona. Dame únicamente:
+1. Las respuestas explicativas a los 3 puntos anteriores.
+2. Los fragmentos de código específicos para guardar (setItem), leer (getItem) y borrar datos de `localStorage`, junto con un dato de ejemplo ya cargado para hacer pruebas. Indica en qué archivo y en qué lugar exacto va cada bloque.
+3. Una función para exportar/descargar los datos en un archivo JSON.
+4. El texto exacto en formato Markdown para agregar a mi archivo PROMPTS.md bajo el encabezado "## M2 · Persistencia de datos".
+
+CRITERIO DE ACEPTACIÓN: Mantenés la estructura de la app intacta, los datos sobreviven al cerrar la pestaña por completo y me das el contenido formateado para PROMPTS.md.
+```
+
+
